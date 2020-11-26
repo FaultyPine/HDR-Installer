@@ -1,0 +1,43 @@
+name: Rust Build
+
+on:
+  push:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: jugeeya/cargo-skyline:latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Link rust-std-skyline src
+      run: mkdir ../rust-std-skyline-squashed && ln -s $XARGO_RUST_SRC ../rust-std-skyline-squashed/src
+    - name: Build release NRO
+      run: cargo skyline build --release
+      
+      # upload relevant artifacts
+    - name: Upload plugin artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: plugin
+        path: target/aarch64-skyline-switch/release/libHDR_Installer.nro
+
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v2
+  
+    - name: Update Release
+      uses: meeDamian/github-release@2.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        prerelease: true
+        allow_override: true
+        gzip: folders
+        tag: beta
+        name: beta
+        body: Build of HDR-Installer from master.
+        files: >
+          plugin/libHDR_Installer.nro
