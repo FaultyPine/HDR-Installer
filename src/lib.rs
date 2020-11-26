@@ -12,7 +12,7 @@ pub fn main() {
 
     remove_saltysd();
 
-    if !Path::new("sd:/is_restart_installing.txt").exists() {
+    if !Path::new("sd:/installing.tmpfile").exists() {
         skyline_web::DialogOk::ok(format!("HDR will now be installed. This is a first-time setup and will take some time. The screen will be blank for a while, but don't worry, this is normal. Please be patient. On the next screen you'll be prompted for an update, please press 'Yes'."));
     }
 
