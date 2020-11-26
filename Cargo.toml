@@ -12,8 +12,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 skyline = { git = "https://github.com/ultimate-research/skyline-rs.git" }
-#skyline-update = { git = "https://github.com/FaultyPine/skyline-update-hacky-directory-support" }
-skyline-update = { path = "../skyline-update-hacky-directory-support/skyline-update" }
+skyline-update = { git = "https://github.com/FaultyPine/skyline-update-hacky-directory-support" }
+#skyline-update = { path = "../skyline-update-hacky-directory-support/skyline-update" }
 skyline-web = { git = "https://github.com/skyline-rs/skyline-web" }
 
 [profile.dev]
