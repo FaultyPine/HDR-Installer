@@ -29,6 +29,15 @@ pub fn main() {
         }
     }
 
+    if !should_install && !Path::new("sd:/installing.tmpfile").exists() {
+        if skyline_web::Dialog::yes_no(format!("An installation of HDR was detected. Would you like to force-reinstall?")) {
+            /* Tbh don't even really need to remove these files... since the update will overwrite the plugins and delete the romfs anyway ¯\_(ツ)_/¯ */
+            let _ = fs::remove_file(Path::new("sd:/atmosphere/contents/01006A800016E000/romfs/skyline/plugins/libHDR.nro"));
+            let _ = fs::remove_dir_all(Path::new("sd:/ultimate/mods/HDR-Base"));
+            should_install = true;
+        }
+    }
+
     if should_install {
         // Check if an update is available
         println!("[HDR_Installer] Checking update server...");
