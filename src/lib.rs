@@ -1,48 +1,77 @@
 #![feature(proc_macro_hygiene)]
 #![allow(non_snake_case)]
 
-use std::{fs, path::Path};
+mod helper_funcs;
+mod update_arcrop_config;
+
 use skyline::nn::oe::*;
+use std::{fs, path::Path};
+use crate::helper_funcs::*;
+
+const HDR_ROMFS_PATH: &str = "sd:/ultimate/mods";
 
 #[skyline::main(name = "HDR_Installer")]
 pub fn main() {
-
     // SPEEEEEEEEEEEED BOOOOST
     unsafe { SetCpuBoostMode(CpuBoostMode::Boost); }
 
-    remove_saltysd();
-
-    if !Path::new("sd:/installing.tmpfile").exists() {
-        skyline_web::DialogOk::ok(format!("HDR will now be installed. This is a first-time setup and will take some time. The screen will be blank for a while, but don't worry, this is normal. Please be patient. On the next screen you'll be prompted for an update, please press 'Yes'."));
-    }
-
     let mut should_install = false;
 
-    for mut f in fs::read_dir("sd:/ultimate/mods") {
+    /* Create arcrop UMM folder if it doesn't already exist */
+    let HDR_workspace_folder_path = Path::new(HDR_ROMFS_PATH);
+    if !HDR_workspace_folder_path.exists() {
+        let _ = fs::create_dir_all(HDR_workspace_folder_path);
+    }
+
+    /* iterate through our UMM folder and our plugin folder */
+    /* if either the HDR romfs OR the HDR plugin doesn't exist, we want to update */
+    for mut f in fs::read_dir(HDR_workspace_folder_path) {
         if !f.any(|x| x.unwrap().file_name().to_str().unwrap().contains("HDR-Base")) {
             should_install = true;
         }
     }
-    for mut f in fs::read_dir("sd:/atmosphere/contents/01006A800016E000/romfs/skyline/plugins") {
+    for mut f in fs::read_dir(SKYLINE_PLUGIN_DIR) {
         if !f.any(|x| x.unwrap().file_name().to_str().unwrap().contains("HDR.nro")) {
             should_install = true;
         }
     }
 
+    /* If both the plugin and romfs are present, this plugin shouldn't really exist since it deletes itself. This means that the user probably wants to re-install so prompt for that here */
     if !should_install && !Path::new("sd:/installing.tmpfile").exists() {
-        if skyline_web::Dialog::yes_no(format!("An installation of HDR was detected. Would you like to force-reinstall?")) {
+        if skyline_web::Dialog::yes_no("HDR Installer present but a previous installation of HDR was detected. Would you like to force-reinstall?") {
             /* Tbh don't even really need to remove these files... since the update will overwrite the plugins and delete the romfs anyway ¯\_(ツ)_/¯ */
-            let _ = fs::remove_file(Path::new("sd:/atmosphere/contents/01006A800016E000/romfs/skyline/plugins/libHDR.nro"));
-            let _ = fs::remove_dir_all(Path::new("sd:/ultimate/mods/HDR-Base"));
+            let _ = fs::remove_file(SKYLINE_PLUGIN_DIR.to_owned() + "/libHDR.nro");
+            let _ = fs::remove_dir_all(HDR_workspace_folder_path.join("HDR-Base"));
             should_install = true;
         }
     }
 
     if should_install {
-        // Check if an update is available
-        println!("[HDR_Installer] Checking update server...");
-        if skyline_update::check_update("3.17.96.120".parse().unwrap(), "HDR", env!("CARGO_PKG_VERSION"), false) {
-            println!("[HDR_Installer] Installed HDR!");
+
+        /* Handle stuff like SaltySD deletion, data.arc disabling, and skyline plugin disabling */
+        clean();
+
+        /* If the "marker" for being in the middle of an install doesn't exist, prompt for the update */
+        if !Path::new("sd:/installing.tmpfile").exists() {
+            skyline_web::DialogOk::ok(
+                "HDR will now be installed. This is a first-time setup and will take some time.
+                The screen will be blank for a while, but don't worry, this is normal. Please be patient. 
+                On the next screen you'll be prompted for an update, please select 'Yes'."
+            );
+        }
+
+        /* Check if an update is available */
+        println!("[HDR Installer] Checking update server...");
+        if skyline_update::check_update("178.128.135.20".parse().unwrap(), "HDR", env!("CARGO_PKG_VERSION"), false,) {
+            println!("[HDR Installer] Installed HDR!");
+
+            /* Update arcrop config file to point to workspace path... disabled until we can actually edit the config file from this plugin */
+            /*match update_arcrop_config::set_default_arcrop_umm_path() {
+                Ok(()) => println!("[HDR Installer] Set Arcropolis active workspace to 'ultimate/mods/HDR'"),
+                Err(e) => println!("[HDR Installer] Failed to set arcropolis active workspace: {}", e)
+            };*/
+
+            /* Delete this plugin. Since plugins are loaded into memory, its not like we're killing this process immediately */
             suicide();
             unsafe { SetCpuBoostMode(CpuBoostMode::Disabled); }
             RestartProgramNoArgs();
@@ -50,42 +79,4 @@ pub fn main() {
     }
 
     unsafe { SetCpuBoostMode(CpuBoostMode::Disabled); }
-}
-
-
-
-
-
-
-fn suicide() {
-    /* Skyline plugin suicide */
-    
-    match fs::remove_file("sd:/atmosphere/contents/01006A800016E000/romfs/skyline/plugins/libHDR_Installer.nro") {
-        Ok(_) => println!("[HDR Installer] Sucessfully cleaned up"),
-        Err(e) => println!("[HDR Installer] Failed to remove HDR Installer: {}", e)
-    }
-}
-
-fn remove_saltysd() {
-    /* Check if SaltySD/SaltySD mods exist, and if so, prompt to remove them */
-
-    let saltysd_sysmodule = Path::new("sd:/atmosphere/contents/0000000000534C56");
-    let saltysd_root = Path::new("sd:/SaltySD");
-
-    if saltysd_sysmodule.exists() || saltysd_root.exists() {
-
-        if skyline_web::Dialog::yes_no(format!("SaltySD detected on SD card. This might have unintended side-effects on HDR and other skyline mods. Would you like to delete them now? (Highly recommended)")) {
-            
-            match fs::remove_dir_all(saltysd_sysmodule) {
-                Ok(()) => println!("[HDR Installer] Removed SaltySD sysmodule"),
-                Err(e) => println!("[HDR Installer] Failed to remove SaltySD sysmodule: {}", e)
-            };
-            match fs::remove_dir_all(saltysd_root) {
-                Ok(()) => println!("[HDR Installer] Removed SaltySD root folder"),
-                Err(e) => println!("[HDR Installer] Failed to remove SaltySD root folder: {}", e)
-            };
-
-        }
-
-    }
 }
