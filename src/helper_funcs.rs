@@ -21,7 +21,7 @@ pub fn clean() {
         if skyline_web::Dialog::yes_no(
             "HDR-Installer detected problematic files. These could be data.arc mods, SaltySD mods, or other skyline plugins.
             These may cause unintended behavior for HDR. Would you like to clean up ALL potentially conflicting files?
-            Please note this will delete SaltySD directories, disable your data.arc file, and disable potentially conflicting skyline plugins.
+            Please note this will DELETE SaltySD directories, DISABLE your data.arc file, and DISABLE potentially conflicting skyline plugins.
             If you aren't sure, select Yes."
         ) {
             remove_saltysd();
