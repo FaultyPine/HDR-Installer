@@ -43,7 +43,6 @@ pub fn main() {
         if skyline_web::Dialog::yes_no("HDR Installer present but a previous installation of HDR was detected. Would you like to force-reinstall?") {
             /* Tbh don't even really need to remove these files... since the update will overwrite the plugins and delete the romfs anyway ¯\_(ツ)_/¯ */
             let _ = fs::remove_file(SKYLINE_PLUGIN_DIR.to_owned() + "/libHDR.nro");
-            let _ = fs::remove_dir_all(HDR_workspace_folder_path.join("HDR-Base"));
             should_install = true;
             is_force_reinstall = true;
         }
