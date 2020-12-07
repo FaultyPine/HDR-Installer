@@ -55,7 +55,7 @@ pub fn main() {
         if !Path::new("sd:/installing.tmpfile").exists() {
             skyline_web::DialogOk::ok(
                 "ATTENTION: HDR will now be installed. This is a first-time setup and will take some time.
-                The screen will be blank for a while, but don't worry, THIS IS NORMAL. Please be patient. 
+                THE SCREEN WILL BE BLANK FOR A WHILE, but don't worry, THIS IS NORMAL. Please be patient. 
                 On the next screen you'll be prompted for an update, please select 'Yes'."
             );
         }
