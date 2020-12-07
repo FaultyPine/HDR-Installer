@@ -1,5 +1,6 @@
 #![feature(proc_macro_hygiene)]
 #![allow(non_snake_case)]
+#![allow(dead_code)]
 
 mod helper_funcs;
 mod update_arcrop_config;
@@ -36,6 +37,7 @@ pub fn main() {
         }
     }
 
+    let mut is_force_reinstall = false;
     /* If both the plugin and romfs are present, this plugin shouldn't really exist since it deletes itself. This means that the user probably wants to re-install so prompt for that here */
     if !should_install && !Path::new("sd:/installing.tmpfile").exists() {
         if skyline_web::Dialog::yes_no("HDR Installer present but a previous installation of HDR was detected. Would you like to force-reinstall?") {
@@ -43,16 +45,19 @@ pub fn main() {
             let _ = fs::remove_file(SKYLINE_PLUGIN_DIR.to_owned() + "/libHDR.nro");
             let _ = fs::remove_dir_all(HDR_workspace_folder_path.join("HDR-Base"));
             should_install = true;
+            is_force_reinstall = true;
         }
     }
 
     if should_install {
 
         /* Handle stuff like SaltySD deletion, data.arc disabling, and skyline plugin disabling */
-        clean();
+        if !is_force_reinstall {
+            clean();
+        }
 
         /* If the "marker" for being in the middle of an install doesn't exist, prompt for the update */
-        if !Path::new("sd:/installing.tmpfile").exists() {
+        if !Path::new("sd:/installing.tmpfile").exists() && !is_force_reinstall {
             skyline_web::DialogOk::ok(
                 "ATTENTION: HDR will now be installed. This is a first-time setup and will take some time.
                 THE SCREEN WILL BE BLANK FOR A WHILE, but don't worry, THIS IS NORMAL. Please be patient. 

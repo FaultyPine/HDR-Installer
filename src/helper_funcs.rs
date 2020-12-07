@@ -15,7 +15,7 @@ pub fn clean() {
         return;
     }
 
-    let needs_cleaning = should_disable_other_plugins() || FOLDERS_TO_CHECK_FOR_CLEANING.iter().any(|&x| Path::new(x).exists());
+    let needs_cleaning = /*should_disable_other_plugins() ||*/ FOLDERS_TO_CHECK_FOR_CLEANING.iter().any(|&x| Path::new(x).exists());
 
     if needs_cleaning {
         if skyline_web::Dialog::yes_no(
@@ -25,7 +25,7 @@ pub fn clean() {
             If you aren't sure, select Yes."
         ) {
             remove_saltysd();
-            disable_other_plugins();
+            //disable_other_plugins();
             disable_data_arc();
         }
     }
@@ -48,13 +48,18 @@ fn disable_other_plugins() {
     for readdir in fs::read_dir(SKYLINE_PLUGIN_DIR) {
         for entry in readdir.map(|x| x.unwrap()) {
             let entry_path = Path::new(SKYLINE_PLUGIN_DIR).join(entry.path());
+            let dst = entry_path.to_str().unwrap().replace("plugins", "disabled_plugins");
+            let dst = Path::new(&dst);
             if !HDR_PLUGIN_NAMES.contains(&entry_path.file_name().unwrap().to_str().unwrap()) {
-                let dst = entry_path.to_str().unwrap().replace("plugins", "disabled_plugins");
-                let dst = Path::new(&dst);
                 if !dst.parent().unwrap().exists() {
                     let _ = std::fs::create_dir_all(dst.parent().unwrap());
                 }
                 let _ = fs::rename(entry_path.to_str().unwrap(), dst);
+            }
+            else {
+                if dst.exists() {
+                    let _ = std::fs::remove_file(dst);
+                }
             }
         }
     }
