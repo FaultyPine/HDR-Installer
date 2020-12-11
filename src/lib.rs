@@ -66,7 +66,7 @@ pub fn main() {
 
         /* Check if an update is available */
         println!("[HDR Installer] Checking update server...");
-        if skyline_update::check_update("157.230.67.115".parse().unwrap(), "HDR", env!("CARGO_PKG_VERSION"), false,) {
+        if skyline_update::check_update("174.138.126.87".parse().unwrap(), "HDR", env!("CARGO_PKG_VERSION"), false,) {
             println!("[HDR Installer] Installed HDR!");
 
             /* Update arcrop config file to point to workspace path... disabled until we can actually edit the config file from this plugin */
